@@ -1,4 +1,3 @@
-# --- model.py ---
 import pickle
 import os
 import streamlit as st
@@ -24,8 +23,7 @@ def load_car_model():
     numerical = data["numerical_columns"]
     feature_cols = data["feature_columns"]
 
-    # --- ОНОВЛЕНО ---
     unique_brands = data["unique_brands"]
-    brand_model_map = data["brand_model_map"]  # Завантажуємо карту
+    brand_model_map = data["brand_model_map"]  
 
     return model, scaler, encoders, categorical, numerical, feature_cols, unique_brands, brand_model_map
