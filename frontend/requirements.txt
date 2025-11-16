@@ -1,0 +1,12 @@
+streamlit
+pandas
+scikit-learn
+matplotlib
+ucimlrepo
+seaborn
+jupyter
+lightgbm
+python-dotenv
+xgboost
+plotly
+requests
