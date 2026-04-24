@@ -1,81 +1,67 @@
 # --- forms.py ---
-import streamlit as st
 import pandas as pd
+import streamlit as st
+import re
 
 
-def car_form():
-    '''
-    Відображає форму вводу ТІЛЬКИ для технічних характеристик.
-    '''
-
-    # Ми використовуємо st.columns для кращого компонування
+def car_form(
+    ext_col_options=None,
+    int_col_options=None,
+    engine_options=None,
+    year_min=None,
+    year_max=None,
+):
+    """Відображає форму вводу для used_cars2.csv."""
+    ext_col_options = ext_col_options or ["Black", "White", "Silver", "Gray", "Blue", "Red", "Unknown"]
+    int_col_options = int_col_options or ["Black", "Gray", "Beige", "Brown", "White", "Unknown"]
+    engine_options = engine_options or ["Unknown"]
+    year_min = int(year_min) if year_min is not None else 1980
+    year_max = int(year_max) if year_max is not None else 2026
 
     with st.form("car_form"):
-        col1, col2, col3 = st.columns(3)
+        col1, col2 = st.columns(2)
 
         with col1:
-            st.subheader("Кузов")
-            carbody = st.selectbox("Тип кузова", ["sedan", "hatchback", "wagon", "hardtop", "convertible"])
-            doornumber = st.selectbox("Кількість дверей", ["two", "four"])
-            drivewheel = st.selectbox("Привід", ["fwd", "rwd", "4wd"])
-            enginelocation = st.selectbox("Розташування двигуна", ["front", "rear"])
+            st.subheader("Базові характеристики")
+            default_year = min(max(2020, year_min), year_max)
+            model_year = st.number_input("Рік випуску", min_value=year_min, max_value=year_max, value=default_year)
+            milage = st.number_input("Пробіг (miles)", min_value=0, max_value=1_000_000, value=50_000)
+            fuel_type = st.selectbox("Тип палива", ["Gasoline", "Hybrid", "Diesel", "Electric", "E85 Flex Fuel", "Unknown"])
+            transmission = st.selectbox(
+                "Трансмісія",
+                ["Automatic", "A/T", "M/T", "CVT", "6-Speed A/T", "8-Speed Automatic", "Unknown"],
+            )
+            clean_title = st.selectbox("Clean title", ["Yes", "No", "Unknown"])
 
         with col2:
-            st.subheader("Двигун")
-            fueltype = st.selectbox("Тип палива", ["gas", "diesel"])
-            aspiration = st.selectbox("Наддув", ["std", "turbo"])
-            enginetype = st.selectbox("Тип двигуна", sorted(["ohc", "ohcf", "ohcv", "l", "rotor", "dohc", "dohcv"]))
-            cylindernumber = st.selectbox("Кількість циліндрів",
-                                          ["two", "three", "four", "five", "six", "eight", "twelve"])
-            fuelsystem = st.selectbox("Паливна система",
-                                      sorted(["mpfi", "2bbl", "mfi", "1bbl", "spfi", "spdi", "4bbl", "idi"]))
-            enginesize = st.number_input("Розмір двигуна (куб. дюйми)", min_value=50, max_value=500, value=150)
-            boreratio = st.number_input("Bore Ratio", min_value=2.0, max_value=5.0, value=3.0, step=0.01)
-            stroke = st.number_input("Stroke", min_value=1.5, max_value=5.0, value=3.0, step=0.01)
+            st.subheader("Додаткові поля")
+            engine = st.selectbox("Двигун (для обраної марки/моделі)", engine_options)
+            selected_engine_volume = "Unknown"
+            if isinstance(engine, str):
+                m = re.search(r"(\d+(?:\.\d+)?)\s*[lL]", engine)
+                if m:
+                    selected_engine_volume = f"{float(m.group(1)):.1f}L"
+            st.caption(f"Об'єм двигуна: `{selected_engine_volume}`")
+            ext_col = st.selectbox("Колір екстер'єру", ext_col_options)
+            int_col = st.selectbox("Колір інтер'єру", int_col_options)
+            accident = st.selectbox(
+                "Історія ДТП",
+                ["None reported", "At least 1 accident or damage reported", "Unknown"],
+            )
 
-        with col3:
-            st.subheader("Характеристики")
-            curbweight = st.number_input("Маса авто (lbs)", min_value=1000, max_value=5000, value=2500)
-            horsepower = st.number_input("Потужність (к.с.)", min_value=40, max_value=300, value=100)
-            peakrpm = st.number_input("Макс. RPM", min_value=3000, max_value=7000, value=5500)
-            compressionratio = st.number_input("Compression Ratio", min_value=5.0, max_value=25.0, value=10.0, step=0.1)
-            citympg = st.number_input("Витрата (місто) MPG", min_value=10, max_value=60, value=25)
-            highwaympg = st.number_input("Витрата (траса) MPG", min_value=10, max_value=60, value=30)
-            wheelbase = st.number_input("Колісна база (дюйми)", min_value=80.0, max_value=150.0, value=100.0)
-            carlength = st.number_input("Довжина авто (дюйми)", min_value=140.0, max_value=210.0, value=170.0)
-            carwidth = st.number_input("Ширина авто (дюйми)", min_value=60.0, max_value=80.0, value=65.0)
-            carheight = st.number_input("Висота авто (дюйми)", min_value=45.0, max_value=65.0, value=55.0)
-
-        # Кнопка відправки
         st.markdown("---")
         submitted = st.form_submit_button("3. Прогнозувати ціну")
 
-    # Створюємо DataFrame (БЕЗ 'brand' та 'model')
     data = {
-        'fueltype': fueltype,
-        'aspiration': aspiration,
-        'doornumber': doornumber,
-        'carbody': carbody,
-        'drivewheel': drivewheel,
-        'enginelocation': enginelocation,
-        'enginetype': enginetype,
-        'cylindernumber': cylindernumber,
-        'fuelsystem': fuelsystem,
-        'wheelbase': wheelbase,
-        'carlength': carlength,
-        'carwidth': carwidth,
-        'carheight': carheight,
-        'curbweight': curbweight,
-        'enginesize': enginesize,
-        'boreratio': boreratio,
-        'stroke': stroke,
-        'compressionratio': compressionratio,
-        'horsepower': horsepower,
-        'peakrpm': peakrpm,
-        'citympg': citympg,
-        'highwaympg': highwaympg
+        "model_year": int(model_year),
+        "milage": float(milage),
+        "fuel_type": fuel_type,
+        "engine": engine.strip() or "Unknown",
+        "transmission": transmission,
+        "ext_col": ext_col.strip() or "Unknown",
+        "int_col": int_col.strip() or "Unknown",
+        "accident": accident,
+        "clean_title": clean_title,
     }
 
-    df = pd.DataFrame([data])
-
-    return df, submitted
+    return pd.DataFrame([data]), submitted

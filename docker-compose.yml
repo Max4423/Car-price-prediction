@@ -9,6 +9,8 @@ services:
             - backend/.env
         ports:
             - "5000:5000"
+        volumes:
+            - ./data:/app/data:ro
         restart: unless-stopped
 
     frontend:
@@ -20,6 +22,8 @@ services:
             - frontend/.env
         ports:
             - "8501:8501"
+        volumes:
+            - ./data:/app/data:ro
         environment:
             - API_URL=http://backend:5000
         depends_on:
